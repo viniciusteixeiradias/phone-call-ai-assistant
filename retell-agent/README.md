@@ -77,3 +77,47 @@ RETELL_API_KEY=your_api_key
 WEBHOOK_URL=https://your-ngrok-url.ngrok.io
 PORT=3001
 ```
+
+## More
+
+Telnyx Agent Created
+
+telnyx-agent/
+├── package.json
+├── tsconfig.json
+├── .env.example
+├── .gitignore
+├── README.md
+└── src/
+  ├── index.ts      # Express server (port 3002)
+  └── types.ts      # Webhook types
+
+Key Differences
+┌───────────────┬─────────────────────────┬────────────────────┐
+│               │       Vapi/Retell       │       Telnyx       │
+├───────────────┼─────────────────────────┼────────────────────┤
+│ Architecture  │ AI-agent first          │ Telephony first    │
+├───────────────┼─────────────────────────┼────────────────────┤
+│ Menu handling │ Webhooks to your server │ Menu in prompt     │
+├───────────────┼─────────────────────────┼────────────────────┤
+│ Phone numbers │ Platform provides       │ You buy & own them │
+├───────────────┼─────────────────────────┼────────────────────┤
+│ Pricing       │ $0.08-0.15/min          │ $0.06-0.09/min     │
+└───────────────┴─────────────────────────┴────────────────────┘
+To Get Started
+
+1. Create account at https://telnyx.com
+2. Buy a phone number (~$1-2/month)
+3. Create a Call Control Application with webhook URL
+4. Configure .env with your TELNYX_API_KEY
+5. Run: npm run dev
+6. Expose: ngrok http 3002
+7. Update webhook URL in Telnyx dashboard
+8. Call your phone number!
+
+All Three Platforms Ready
+
+# You now have:
+vapi-agent/    # Port 3000 - $0.08-0.12/min
+retell-agent/  # Port 3001 - $0.09-0.15/min
+telnyx-agent/  # Port 3002 - $0.06-0.09/min (cheapest!)
