@@ -201,3 +201,12 @@ This way:
 - [Vapi AI Plans & Pricing - CloudTalk](https://www.cloudtalk.io/blog/vapi-ai-pricing/)
 - [Vapi Pricing Breakdown - Dograh](https://blog.dograh.com/vapi-pricing-breakdown-2025-plans-hidden-costs-what-to-expect/)
 - [VAPI pricing - Telnyx](https://telnyx.com/resources/vapi-pricing)
+
+
+## Future Enhancements
+{
+    maxDurationSeconds: 300,        // Max call length (5 min)
+    silenceTimeoutSeconds: 30,      // Hang up after 30s of silence
+    responseDelaySeconds: 0.5,      // How fast assistant responds
+    endCallPhrases: ["goodbye", "bye", "that's all"],  // Trigger end call
+}

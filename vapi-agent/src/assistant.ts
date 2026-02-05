@@ -118,6 +118,7 @@ async function createAssistant() {
     },
     firstMessage: "Thanks for calling! I'm here to help you place an order. Would you like to hear our menu, or do you already know what you'd like?",
     maxDurationSeconds: 300, // 5 minute limit
+    endCallMessage: "I'm sorry, we've reached our time limit. Please call back to complete your order. Goodbye!",
     server: {
       url: process.env.WEBHOOK_URL!
     }
