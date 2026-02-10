@@ -33,7 +33,7 @@ async function createAssistant() {
   }
 
   const assistant = await vapi.assistants.create({
-    name: 'Restaurant Order Assistant',
+    name: 'FoodInn Order Assistant',
     model: {
       provider: 'openai',
       model: 'gpt-4o',
@@ -117,7 +117,7 @@ async function createAssistant() {
       voiceId: 'cgSgspJ2msm6clMCkdW9'
     },
     firstMessage: "Thanks for calling! I'm here to help you place an order. Would you like to hear our menu, or do you already know what you'd like?",
-    maxDurationSeconds: 300, // 5 minute limit
+    maxDurationSeconds: 30,
     endCallMessage: "I'm sorry, we've reached our time limit. Please call back to complete your order. Goodbye!",
     server: {
       url: process.env.WEBHOOK_URL!
@@ -133,3 +133,5 @@ async function createAssistant() {
 }
 
 createAssistant().catch(console.error);
+
+// How to connect an app to voip

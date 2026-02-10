@@ -20,6 +20,32 @@ function calculateTotal(items: OrderItem[]): number {
   return items.reduce((sum, item) => sum + item.price * item.quantity, 0);
 }
 
+app.post('/webhook/inbound', (req: Request, res: Response) => {
+  const { call_inbound } = req.body;
+  console.log(`Inbound call from ${call_inbound.from_number} to ${call_inbound.to_number}`);
+
+  res.json({
+    call_inbound: {
+      dynamic_variables: {
+        restaurant_name: 'FoodInn',
+        website_url: 'foodinn.ie/menu'
+      }
+    }
+  });
+});
+
+app.post('/tools/get_restaurant_name', (_req: Request, res: Response) => {
+  // res.json({ result: 'FoodInn' });
+  // res.json({ result: 'Chef Kebab' });
+  res.json({ result: 'Brugo Pizza and Kebab' });
+});
+
+app.post('/tools/get_website_url', (_req: Request, res: Response) => {
+  // res.json({ result: 'foodinn.ie' });
+  // res.json({ result: 'chefkebabkinnegad.ie' });
+  res.json({ result: 'burgoopizza.ie' });
+});
+
 app.post('/tools/get_menu', (req: Request, res: Response) => {
   const body = req.body as RetellToolRequest;
   console.log(`[${body.call.call_id}] get_menu called`);
@@ -38,6 +64,10 @@ app.post('/tools/add_to_order', (req: Request, res: Response) => {
   const itemName = args.item as string;
   const quantity = (args.quantity as number) || 1;
   const notes = args.notes as string | undefined;
+
+  if (quantity > 10) {
+    console.warn(`[${call.call_id}] ALERT: Large quantity requested - ${quantity}x "${itemName}"`);
+  }
 
   const menuItem = findMenuItem(itemName);
   if (!menuItem) {
@@ -85,7 +115,7 @@ app.post('/tools/get_order_total', (req: Request, res: Response) => {
   }
 
   const summary = order.items
-    .map(item => `${item.quantity}x ${item.name} - $${(item.price * item.quantity).toFixed(2)}${item.notes ? ` (${item.notes})` : ''}`)
+    .map(item => `${item.quantity}x ${item.name} - €${(item.price * item.quantity).toFixed(2)}${item.notes ? ` (${item.notes})` : ''}`)
     .join(', ');
 
   res.json({
@@ -102,6 +132,7 @@ app.post('/tools/confirm_order', (req: Request, res: Response) => {
 
   const order = getOrCreateOrder(call.call_id);
   const customerName = args.customer_name as string;
+  const orderType = args.order_type as string;
   const pickupTime = args.pickup_time as string | undefined;
 
   if (order.items.length === 0) {
@@ -113,6 +144,7 @@ app.post('/tools/confirm_order', (req: Request, res: Response) => {
   }
 
   order.customerName = customerName;
+  order.orderType = orderType;
   order.pickupTime = pickupTime || '20 minutes';
 
   const orderId = `ORD-${Date.now()}`;
@@ -120,13 +152,17 @@ app.post('/tools/confirm_order', (req: Request, res: Response) => {
 
   orders.delete(call.call_id);
 
+  const isDelivery = orderType?.toLowerCase().includes('delivery');
+  const estimatedTime = isDelivery ? '30-40 minutes' : '15-20 minutes';
+
   res.json({
     success: true,
     orderId,
     customerName,
-    pickupTime: order.pickupTime,
+    orderType,
+    estimatedTime,
     total: order.total.toFixed(2),
-    message: `Your order has been confirmed. Order number ${orderId}. Total is $${order.total.toFixed(2)}. It will be ready for pickup in ${order.pickupTime}.`
+    message: `Order confirmed for ${customerName}. Order number ${orderId}. Total is €${order.total.toFixed(2)}. Estimated time: ${estimatedTime} for ${orderType}.`
   });
 });
 
@@ -138,6 +174,8 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Retell agent server running on port ${PORT}`);
   console.log(`Tool endpoints:`);
+  console.log(`  POST /tools/get_restaurant_name`);
+  console.log(`  POST /tools/get_website_url`);
   console.log(`  POST /tools/get_menu`);
   console.log(`  POST /tools/add_to_order`);
   console.log(`  POST /tools/get_order_total`);

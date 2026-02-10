@@ -3,7 +3,7 @@ export interface MenuItem {
   name: string;
   description: string;
   price: number;
-  category: 'appetizer' | 'main' | 'drink' | 'dessert';
+  category: string;
 }
 
 export interface OrderItem {
@@ -17,6 +17,7 @@ export interface OrderItem {
 export interface Order {
   items: OrderItem[];
   customerName?: string;
+  orderType?: string;
   pickupTime?: string;
   total: number;
 }
