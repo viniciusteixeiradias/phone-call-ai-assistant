@@ -13,11 +13,12 @@ Your job is to:
 2. Take their order (use get_menu to verify items exist, then add_to_order for each item)
 3. Confirm quantities and any special requests
 4. When the customer is done ordering, ask if it's for delivery or takeaway
-5. Ask for the customer's name
-6. Repeat the complete order back to the customer including all items, quantities, and the total (use get_order_total tool)
-7. Wait for the customer to explicitly confirm the order is correct before proceeding
-8. Finalize the order (use confirm_order tool) and tell the customer the estimated time
-9. Say "Thank you for ordering using FoodInn AI Assistant" and end the call (use end_call tool)
+5. If delivery, ask for the delivery address and a contact phone number
+6. Ask for the customer's name
+7. Repeat the complete order back to the customer including all items, quantities, and the total (use get_order_total tool)
+8. Wait for the customer to explicitly confirm the order is correct before proceeding
+9. Finalize the order (use confirm_order tool) and tell the customer the estimated time
+10. Say "Thank you for ordering using FoodInn AI Assistant" and end the call (use end_call tool)
 
 Strict boundaries:
 - ONLY discuss topics related to food orders and the restaurant
@@ -43,6 +44,8 @@ Guidelines:
 - When a customer asks to order an item, ALWAYS call get_menu first to verify the item exists and get the correct name and price. Only call add_to_order with the exact item name from the menu.
 - When the customer asks about availability (e.g. "do you have drinks?", "what pizzas do you have?"), ALWAYS call get_menu to check and answer based ONLY on what the tool returns. NEVER assume or make up items that are not in the menu response. If the item or category is not found in the menu, say "Sorry, we don't have that on our menu right now."
 - You do NOT know the menu from memory. You MUST always use the get_menu tool to check. Never guess or assume what items are available.
+- For delivery orders, you MUST collect the delivery address and a contact phone number before confirming the order.
+- For pizza meals that include toppings, always ask the customer which toppings they want and include them in the notes field when calling add_to_order.
 - You MUST repeat back every item with its quantity and the total price before calling confirm_order. Do NOT skip this step.
 - After the order is confirmed, tell the customer the estimated time from the confirm_order response.
 - This call has a 5 minute time limit. Keep the conversation moving efficiently. If you sense the call is running long, politely let the customer know you need to wrap up soon and help them finalize quickly.
@@ -51,7 +54,8 @@ Guidelines:
 
 function buildLlmConfig(webhookUrl: string) {
   return {
-    model: 'gpt-4.1-nano' as const,
+    // model: 'gpt-4.1-nano' as const,
+    model: 'gpt-4.1-mini' as const,
     default_dynamic_variables: {
       // restaurant_name: 'Chef Kebab',
       // website_url: 'chefkebabkinnegad.ie'
@@ -126,6 +130,23 @@ function buildLlmConfig(webhookUrl: string) {
       },
       {
         type: 'custom' as const,
+        name: 'remove_from_order',
+        description: "Remove an item from the customer's order. Use when the customer wants to cancel or remove an item.",
+        url: `${webhookUrl}/tools/remove_from_order`,
+        speak_after_execution: true,
+        parameters: {
+          type: 'object' as const,
+          properties: {
+            item: {
+              type: 'string',
+              description: 'The name of the item to remove'
+            }
+          },
+          required: ['item']
+        }
+      },
+      {
+        type: 'custom' as const,
         name: 'get_order_total',
         description: "Get the current order summary showing all items and the total price. Use this when the customer asks for their total or wants to review their order.",
         url: `${webhookUrl}/tools/get_order_total`,
@@ -152,6 +173,14 @@ function buildLlmConfig(webhookUrl: string) {
               type: 'string',
               description: 'Whether the order is for delivery or takeaway'
             },
+            delivery_address: {
+              type: 'string',
+              description: 'The delivery address (required for delivery orders)'
+            },
+            phone_number: {
+              type: 'string',
+              description: 'Contact phone number for the order (required for delivery orders)'
+            },
             pickup_time: {
               type: 'string',
               description: 'When the customer wants to pick up (optional)'
@@ -170,7 +199,7 @@ const agentConfig = {
   language: 'en-US' as const,
   max_call_duration_ms: 300000,
   end_call_after_silence_ms: 15000,
-  enable_backchannel: false
+  enable_backchannel: true
 };
 
 async function createAgent() {

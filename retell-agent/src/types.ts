@@ -18,6 +18,8 @@ export interface Order {
   items: OrderItem[];
   customerName?: string;
   orderType?: string;
+  deliveryAddress?: string;
+  phoneNumber?: string;
   pickupTime?: string;
   total: number;
 }

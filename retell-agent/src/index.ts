@@ -98,6 +98,38 @@ app.post('/tools/add_to_order', (req: Request, res: Response) => {
   });
 });
 
+app.post('/tools/remove_from_order', (req: Request, res: Response) => {
+  const body = req.body as RetellToolRequest;
+  const { args, call } = body;
+  console.log(`[${call.call_id}] remove_from_order called:`, args);
+
+  const order = getOrCreateOrder(call.call_id);
+  const itemName = (args.item as string).toLowerCase();
+
+  const index = order.items.findIndex(item =>
+    item.name.toLowerCase().includes(itemName) ||
+    itemName.includes(item.name.toLowerCase())
+  );
+
+  if (index === -1) {
+    res.json({
+      success: false,
+      message: `I couldn't find "${args.item}" in your order.`
+    });
+    return;
+  }
+
+  const removed = order.items.splice(index, 1)[0];
+  order.total = calculateTotal(order.items);
+
+  res.json({
+    success: true,
+    message: `Removed ${removed.quantity}x ${removed.name} from your order.`,
+    currentTotal: order.total.toFixed(2),
+    itemCount: order.items.length
+  });
+});
+
 app.post('/tools/get_order_total', (req: Request, res: Response) => {
   const body = req.body as RetellToolRequest;
   const { call } = body;
@@ -133,6 +165,8 @@ app.post('/tools/confirm_order', (req: Request, res: Response) => {
   const order = getOrCreateOrder(call.call_id);
   const customerName = args.customer_name as string;
   const orderType = args.order_type as string;
+  const deliveryAddress = args.delivery_address as string | undefined;
+  const phoneNumber = args.phone_number as string | undefined;
   const pickupTime = args.pickup_time as string | undefined;
 
   if (order.items.length === 0) {
@@ -145,6 +179,8 @@ app.post('/tools/confirm_order', (req: Request, res: Response) => {
 
   order.customerName = customerName;
   order.orderType = orderType;
+  order.deliveryAddress = deliveryAddress;
+  order.phoneNumber = phoneNumber;
   order.pickupTime = pickupTime || '20 minutes';
 
   const orderId = `ORD-${Date.now()}`;
@@ -160,6 +196,8 @@ app.post('/tools/confirm_order', (req: Request, res: Response) => {
     orderId,
     customerName,
     orderType,
+    deliveryAddress,
+    phoneNumber,
     estimatedTime,
     total: order.total.toFixed(2),
     message: `Order confirmed for ${customerName}. Order number ${orderId}. Total is €${order.total.toFixed(2)}. Estimated time: ${estimatedTime} for ${orderType}.`
@@ -178,6 +216,7 @@ app.listen(PORT, () => {
   console.log(`  POST /tools/get_website_url`);
   console.log(`  POST /tools/get_menu`);
   console.log(`  POST /tools/add_to_order`);
+  console.log(`  POST /tools/remove_from_order`);
   console.log(`  POST /tools/get_order_total`);
   console.log(`  POST /tools/confirm_order`);
 });
